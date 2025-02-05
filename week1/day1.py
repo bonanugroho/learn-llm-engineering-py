@@ -22,10 +22,13 @@ else:
 
 MODEL_OLLAMA = "llama3.2"
 MODEL_GPT = "gpt-4o-mini"
+MODEL_QWEN_25 = "qwen2.5:3b"
+MODEL_DEEPSEEK_R1_1 = "deepseek-r1:1.5b"
+MODEL_DEEPSEEK_R1_7 = "deepseek-r1:7b"
 BASE_URL_OLLAMA = "http://localhost:11434/v1"
 
-# openai = OpenAI(base_url=BASE_URL_OLLAMA, api_key="ollama")
-openai = OpenAI()
+openai = OpenAI(base_url=BASE_URL_OLLAMA, api_key="ollama")
+# openai = OpenAI()
 
 # Some websites need you to use proper headers when fetching them:
 headers = {
@@ -73,6 +76,7 @@ def summarize(url, model):
         model = model,
         messages = messages_for(website)
     )
+    print(f"Using Model: ", response.model)
     return response.choices[0].message.content
 
 # A function to display this nicely in the Jupyter output, using markdown
@@ -85,5 +89,5 @@ def display_summary(url, model):
 # print("title:", ws.title)
 # print("text:",ws.text)
 
-print(summarize("https://edwarddonner.com", MODEL_GPT))
+print(summarize("https://edwarddonner.com", MODEL_DEEPSEEK_R1_1))
 # print(summarize("https://cnn.com", MODEL_GPT))
