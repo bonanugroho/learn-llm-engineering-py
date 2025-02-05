@@ -5,7 +5,7 @@ import requests
 import json
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from IPython.display import Markdown, display
+from IPython.display import Markdown, display, update_display
 from openai import OpenAI
 
 load_dotenv(override=True)
@@ -174,3 +174,27 @@ def create_brochure(company_name, url, model):
 
 # print(create_brochure("HuggingFace", "https://huggingface.com", MODEL_GPT_4o_MINI))
 print(create_brochure("Edward Donner", "https://edwarddonner.com",MODEL_LLAMA_32))
+
+
+def stream_brochure(company_name, url, model):
+    api = get_openai_api(model)
+    stream = api.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": get_brochure_user_prompt(company_name, url, model)}
+        ],
+        stream=True
+    )
+
+    response = ""
+    # display_handle = display(Markdown(""), display_id=True)
+    for chunk in stream:
+        response += chunk.choices[0].delta.content or ''
+        # response = chunk.choices[0].delta.content
+        response = response.replace("```", "").replace("markdown", "")
+        print(response)
+        # update_display(Markdown(response), display_id=display_handle.display_id)
+
+# stream_brochure("Edward Donner", "https://edwarddonner.com", MODEL_LLAMA_32)
+# stream_brochure("HuggingFace", "https://huggingface.co", MODEL_GPT_4o_MINI)
