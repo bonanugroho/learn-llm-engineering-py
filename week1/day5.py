@@ -173,7 +173,7 @@ def create_brochure(company_name, url, model):
     return result
 
 # print(create_brochure("HuggingFace", "https://huggingface.com", MODEL_GPT_4o_MINI))
-print(create_brochure("Edward Donner", "https://edwarddonner.com",MODEL_LLAMA_32))
+# print(create_brochure("Edward Donner", "https://edwarddonner.com",MODEL_LLAMA_32))
 
 
 def stream_brochure(company_name, url, model):
@@ -187,14 +187,9 @@ def stream_brochure(company_name, url, model):
         stream=True
     )
 
-    response = ""
-    # display_handle = display(Markdown(""), display_id=True)
     for chunk in stream:
-        response += chunk.choices[0].delta.content or ''
-        # response = chunk.choices[0].delta.content
-        response = response.replace("```", "").replace("markdown", "")
-        print(response)
-        # update_display(Markdown(response), display_id=display_handle.display_id)
+        if chunk.choices[0].delta.content is not None:
+            print(chunk.choices[0].delta.content, end="")
 
-# stream_brochure("Edward Donner", "https://edwarddonner.com", MODEL_LLAMA_32)
+stream_brochure("Edward Donner", "https://edwarddonner.com", MODEL_LLAMA_32)
 # stream_brochure("HuggingFace", "https://huggingface.co", MODEL_GPT_4o_MINI)
