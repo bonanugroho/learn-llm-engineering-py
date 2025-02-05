@@ -23,14 +23,23 @@ else:
 
 
 MODEL_LLAMA_32 = "llama3.2:3b"
-MODEL_GPT = "gpt-4o-mini"
+MODEL_GPT_4o_MINI = "gpt-4o-mini"
 MODEL_QWEN_25 = "qwen2.5:3b"
 MODEL_DEEPSEEK_R1_1 = "deepseek-r1:1.5b"
 MODEL_DEEPSEEK_R1_7 = "deepseek-r1:7b"
 BASE_URL_OLLAMA = "http://localhost:11434/v1"
 
-openai = OpenAI(base_url=BASE_URL_OLLAMA, api_key="ollama")
+# openai = OpenAI(base_url=BASE_URL_OLLAMA, api_key="ollama")
 # openai = OpenAI()
+
+def get_openai_api(model):
+    if model == MODEL_GPT_4o_MINI:
+        api = OpenAI()
+    else:
+        api = OpenAI(base_url=BASE_URL_OLLAMA, api_key="ollama")
+
+    return api
+
 
 # Some websites need you to use proper headers when fetching them:
 headers = {
@@ -62,7 +71,7 @@ class Website:
         return f"Webpage Title:\n{self.title}\nWebpage Contents:\n{self.text}\n\n"
 
 
-ed = Website("https://edwarddonner.com")
+# ed = Website("https://edwarddonner.com")
 # print(ed.links)
 
 link_system_prompt = "You are provided with a list of links found on a webpage. \
@@ -88,12 +97,14 @@ Do not include Terms of Service, Privacy, email links.\n"
     user_prompt += "\n".join(website.links)
     return user_prompt
 
-# print(get_links_user_prompt(ed))
+# print(get_links_user_prompt(Website("https://edwarddonner.com")))
+# print(get_links_user_prompt(Website("https://huggingface.co")))
 
 
 def get_links(url,model):
     website = Website(url)
-    response = openai.chat.completions.create(
+    api = get_openai_api(model)
+    response = api.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": link_system_prompt},
@@ -104,4 +115,62 @@ def get_links(url,model):
     result = response.choices[0].message.content
     return json.loads(result)
 
-print(get_links("https://edwarddonner.com",MODEL_LLAMA_32))
+# print(get_links("https://huggingface.co",MODEL_LLAMA_32))
+# print(get_links("https://huggingface.co",MODEL_GPT_4o_MINI))
+# print(get_links("https://edwarddonner.com",MODEL_LLAMA_32))
+
+
+def get_all_details(url,model):
+    result = "Landing page:\n"
+    result += Website(url).get_contents()
+    links = get_links(url,model)
+    print("Found links:", links)
+    for link in links["links"]:
+        if link["url"] != "" or "https://" not in link["url"]:
+            result += f"\n\n{link['type']}\n"
+            result += Website(link["url"]).get_contents()
+    return result
+
+
+# print(get_all_details("https://huggingface.co", MODEL_GPT_4o_MINI))
+# print(get_all_details("https://edwarddonner.com",MODEL_LLAMA_32))
+
+
+system_prompt = "You are an assistant that analyzes the contents of several relevant pages from a company website \
+and creates a short brochure about the company for prospective customers, investors and recruits. Respond in markdown.\
+Include details of company culture, customers and careers/jobs if you have the information."
+
+# Or uncomment the lines below for a more humorous brochure - this demonstrates how easy it is to incorporate 'tone':
+
+# system_prompt = "You are an assistant that analyzes the contents of several relevant pages from a company website \
+# and creates a short humorous, entertaining, jokey brochure about the company for prospective customers, investors and recruits. Respond in markdown.\
+# Include details of company culture, customers and careers/jobs if you have the information."
+
+
+def get_brochure_user_prompt(company_name, url, model):
+    user_prompt = f"You are looking at a company called: {company_name}\n"
+    user_prompt += f"Here are the contents of its landing page and other relevant pages; use this information to build a short brochure of the company in markdown.\n"
+    user_prompt += get_all_details(url, model)
+    user_prompt = user_prompt[:5_000] # Truncate if more than 5,000 characters
+    return user_prompt
+
+# print(get_brochure_user_prompt("HuggingFace", "https://huggingface.co",MODEL_GPT_4o_MINI))
+# print(get_brochure_user_prompt("Edward Donner", "https://edwarddonner.com", MODEL_GPT_4o_MINI))
+
+
+def create_brochure(company_name, url, model):
+    api = get_openai_api(model)
+    response = api.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": get_brochure_user_prompt(company_name, url, model)}
+          ],
+    )
+    result = response.choices[0].message.content
+    # print(Markdown(result))
+    # display(Markdown(result))
+    return result
+
+# print(create_brochure("HuggingFace", "https://huggingface.com", MODEL_GPT_4o_MINI))
+print(create_brochure("Edward Donner", "https://edwarddonner.com",MODEL_LLAMA_32))
