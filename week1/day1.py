@@ -20,7 +20,7 @@ elif api_key.strip() != api_key:
 else:
     print("API key found and looks good so far!")
 
-MODEL_OLLAMA = "llama3.2"
+MODEL_LLAMA_32 = "llama3.2:3b"
 MODEL_GPT = "gpt-4o-mini"
 MODEL_QWEN_25 = "qwen2.5:3b"
 MODEL_DEEPSEEK_R1_1 = "deepseek-r1:1.5b"
