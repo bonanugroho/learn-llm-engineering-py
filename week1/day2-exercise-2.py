@@ -11,7 +11,16 @@ messages = [
     {"role": "user", "content": "Describe some of the business applications of Generative AI"}
 ]
 
-response = ollama.chat(model=MODEL_QWEN_25, messages=messages)
+system_message = "You are an assistant that is great at telling jokes"
+user_prompt = "Tell a light-hearted joke for an audience of Data Scientists"
+
+prompts = [
+    {"role": "system", "content": system_message},
+    {"role": "user", "content": user_prompt}
+  ]
+
+# response = ollama.chat(model=MODEL_QWEN_25, messages=messages)
+response = ollama.chat(model=MODEL_LLAMA_32, messages=prompts)
 
 print(response['message']['content'])
 print(f"Using Model: ", response.model)
