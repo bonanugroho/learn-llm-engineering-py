@@ -86,8 +86,8 @@ def call_os():
 
 
 gpt_messages = ["Hi there"]
-claude_messages = ["Hi"]
-os_messages = ["Hello, What's up guys"]
+os_messages = ["Hi"]
+claude_messages = ["Hello, What's up guys"]
 
 # print(call_claude())
 # print(call_gpt())
