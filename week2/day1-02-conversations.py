@@ -35,14 +35,14 @@ MODEL_OS_DEEPSEEK_R1_7 = "deepseek-r1:7b"
 MODEL_GPT = "gpt-4o-mini"
 MODEL_CLAUDE = "claude-3-haiku-20240307"
 
-gpt_system = "You are a chatbot who is very argumentative; \
+claude_system = "You are a chatbot who is very argumentative; \
 you disagree with anything in the conversation and you challenge everything, in a snarky way."
 
 os_system = "You are a very polite, courteous chatbot. You try to agree with \
 everything the other person says, or find common ground. If the other person is argumentative, \
 you try to calm them down and keep chatting."
 
-claude_system = "You are an humorous chatbot that is great at telling jokes. You like to \
+gpt_system = "You are an humorous chatbot that is great at telling jokes. You like to \
 tell a light-hearted joke for every comments in conversation to make everyone happy."
 
 def call_gpt():
@@ -85,9 +85,9 @@ def call_os():
     return response['message']['content']
 
 
-gpt_messages = ["Hi there"]
+claude_messages = ["Hi there"]
 os_messages = ["Hi"]
-claude_messages = ["Hello, What's up guys"]
+gpt_messages = ["Hello, What's up guys"]
 
 # print(call_claude())
 # print(call_gpt())
