@@ -24,7 +24,7 @@ prompts = [
 # response = client.chat(model=MODEL_LLAMA_32, messages=prompts)
 
 # print(response['message']['content'])
-
+# used_model = response.model)
 
 stream = ollama.chat(
     model=MODEL_LLAMA_32,
@@ -32,7 +32,9 @@ stream = ollama.chat(
     stream=True,
 )
 
+used_model = ""
 for chunk in stream:
+    used_model = chunk.model
     print(chunk['message']['content'], end='', flush=True)
 
-# print(f"Using Model: ", stream.model)
+print(f"\nUsing Model: ", used_model)
