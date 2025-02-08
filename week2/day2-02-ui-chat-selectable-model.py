@@ -9,7 +9,7 @@ import ollama
 
 import gradio as gr # oh yeah!
 
-load_dotenv()
+load_dotenv(override=True)
 openai_api_key = os.getenv('OPENAI_API_KEY')
 anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
 

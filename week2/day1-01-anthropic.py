@@ -9,7 +9,7 @@ from IPython.display import Markdown, display, update_display
 # Load environment variables in a file called .env
 # Print the key prefixes to help with any debugging
 
-load_dotenv()
+load_dotenv(override=True)
 openai_api_key = os.getenv('OPENAI_API_KEY')
 anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
 google_api_key = os.getenv('GOOGLE_API_KEY')
