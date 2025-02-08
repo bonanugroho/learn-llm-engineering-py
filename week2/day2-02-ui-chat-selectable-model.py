@@ -37,7 +37,6 @@ function refresh() {
 }
 """
 
-# A generic system message - no more snarky adversarial AIs!
 system_message = "You are a helpful assistant that responds in markdown"
 
 def message_gpt(prompt):
@@ -98,14 +97,17 @@ def stream_os(prompt,model):
         yield result
 
 def stream_model(prompt, model):
-    if model=="GPT":
-        result = stream_gpt(prompt)
-    elif model=="Claude":
-        result = stream_claude(prompt)
-    elif model=="llama3.2:3b" or model=="qwen2.5:3b" or model=="deepseek-r1:1.5b":
-        result = stream_os(prompt,model)
-    else:
-        raise ValueError("Unknown model")
+    match model:
+        case "GPT":
+            result = stream_gpt(prompt)
+        case "Claude":
+            result = stream_claude(prompt)
+        case (model) if model == "llama3.2:3b" or model == "qwen2.5:3b" or model == "deepseek-r1:1.5b" :
+            print(f"Using Open Source Model (On local): {model}")
+            result = stream_os(prompt, model)
+        case _ :
+            raise ValueError("Unknown model")
+
     yield from result
 
 
