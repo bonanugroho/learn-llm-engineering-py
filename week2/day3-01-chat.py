@@ -32,11 +32,6 @@ claude = anthropic.Anthropic()
 
 MODEL_GPT = "gpt-4o-mini"
 MODEL_CLAUDE = "claude-3-haiku-20240307"
-MODEL_OLLAMA_LLAMA32 = "llama3.2:3b"
-MODEL_OLLAMA_QWEN25 = "qwen2.5:3b"
-MODEL_OLLAMA_GEMMA2 = "gemma2:2b"
-MODEL_OLLAMA_PHI3 = "phi3:3.8b"
-MODEL_OLLAMA_DEEPSEEK_R1 = "deepseek-r1:1.5b"
 
 # system_message = "You are a helpful assistant"
 system_message = "You are a helpful assistant in a clothes store. You should try to gently encourage \
@@ -68,11 +63,11 @@ def prepare_system_messages(message):
 
     return relevant_system_messages
 
-def chat_ollama(message, history):
-    messages, _ = prepare_messages(message, history)
+def chat_ollama(message, history, model):
+    messages = prepare_messages(message, history)
 
     stream = ollama.chat(
-        model=MODEL_OLLAMA_LLAMA32,
+        model=model,
         messages=messages,
         stream=True
     )
@@ -111,7 +106,7 @@ def chat_claude(message, history):
     print(messages)
 
     result = claude.messages.stream(
-        model="claude-3-haiku-20240307",
+        model=MODEL_CLAUDE,
         max_tokens=1000,
         temperature=0.7,
         system=relevant_system_messages,
@@ -126,4 +121,36 @@ def chat_claude(message, history):
 system_message += "\nIf the customer asks for shoes, you should respond that shoes are not on sale today, \
 but remind the customer to look at hats!"
 
-gr.ChatInterface(fn=chat_claude, type="messages").launch()
+# # without selectable model
+# gr.ChatInterface(fn=chat_claude, type="messages").launch()
+
+
+# Add selectable model for chat
+def stream_by_model(message, history, model):
+    response = ""
+    match model:
+        case "GPT":
+            print(f"Using GPT")
+            response = chat_gpt(message, history)
+        case "Claude":
+            print(f"Using Claude")
+            response = chat_claude(message, history)
+        case (model) if model == "llama3.2:3b" or model == "qwen2.5:3b" or model == "gemma2:2b" or model == "phi3:3.8b" :
+            print(f"Using Ollama Open Source Model (On local): {model}")
+            response = chat_ollama(message, history, model)
+        case _ :
+            response = f"Unknown model: {model}"
+            raise ValueError("Unknown model")
+
+    yield from response
+
+with gr.Blocks() as ui:
+    select_model = gr.Dropdown(["GPT", "Claude", "llama3.2:3b", "qwen2.5:3b", "gemma2:2b", "phi3:3.8b"], label="Select model", value="GPT")
+
+    gr.ChatInterface(
+        fn=stream_by_model,
+        type="messages",
+        additional_inputs=[select_model],
+    )
+
+ui.launch()
