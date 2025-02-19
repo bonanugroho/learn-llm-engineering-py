@@ -37,6 +37,7 @@ MODEL_LLAMA_32 = "llama3.2:3b"
 system_message = "You are a helpful assistant for an Airline called FlightAI. "
 system_message += "Give short, courteous answers, no more than 1 sentence. "
 system_message += "Always be accurate. If you don't know the answer, say so."
+# system_message += "You have access to tools, but only use them when necessary.  If a tool is not required, respond as normal"
 
 def handle_tool_call_gpt(message):
     tool_call = message.tool_calls[0]
@@ -51,6 +52,35 @@ def handle_tool_call_gpt(message):
 
     return response, city
 
+
+# Using example from ollama
+def handle_tool_call_ollama(message):
+    response = {"role": "tool", "content": None, "tool_call_id": None}
+    city = None
+
+    for tool in message.tool_calls:
+        if function_to_call := available_functions.get(tool.function.name):
+            print('Calling function:', tool.function.name)
+            print('Arguments:', tool.function.arguments)
+
+            if isinstance(tool.function.arguments, str):
+                city = json.loads(tool.function.arguments).get('destination_city')
+            else:
+                city = tool.function.arguments.get('destination_city')
+
+            price = function_to_call(city)
+            print('Function Output:',price)
+            response = {
+                "role": "tool",
+                "content": json.dumps({"destination_city": city, "price": price}),
+                "name": tool.function.name,
+            }
+        else:
+            print('Function ',tool.function.name,' Not found')
+
+    return response, city
+
+
 def chat_gpt(message, history):
     messages = [{"role": "system", "content": system_message}] + history + [{"role": "user", "content": message}]
     response = openai.chat.completions.create(model=MODEL_GPT, messages=messages, tools=tools)
@@ -63,6 +93,7 @@ def chat_gpt(message, history):
         response = openai.chat.completions.create(model=MODEL_GPT, messages=messages)
 
     return response.choices[0].message.content
+
 
 def chat_claude(message, history):
     messages = []
@@ -79,9 +110,20 @@ def chat_claude(message, history):
     )
     return message.content[0].text
 
+
+
 def chat_ollama(message, history, model):
     messages = [{"role": "system", "content": system_message}] + history + [{"role": "user", "content": message}]
-    response = ollama.chat(model=model, messages=messages)
+    response = ollama.chat(model=model, messages=messages, tools=[get_ticket_price])
+
+    if response.message.tool_calls:
+        message = response['message']
+        response, city = handle_tool_call_ollama(message)
+        messages.append(message)
+        messages.append(response)
+        response = ollama.chat(model=model, messages=messages)
+
+
     return response['message']['content']
 
 # gr.ChatInterface(fn=chat_ollama, type="messages").launch()
@@ -98,7 +140,6 @@ def stream_by_model(message, history, model):
             print(f"Using Ollama Open Source Model (On local): {model}")
             response = chat_ollama(message, history, model)
         case _ :
-
             response = f"Unknown model: {model}"
             raise ValueError("Unknown model")
 
@@ -114,24 +155,31 @@ def get_ticket_price(destination_city):
 
 
 # There's a particular dictionary structure that's required to describe our function:
-price_function = {
-    "name": "get_ticket_price",
-    "description": "Get the price of a return ticket to the destination city. Call this whenever you need to know the ticket price, for example when a customer asks 'How much is a ticket to this city'",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "destination_city": {
-                "type": "string",
-                "description": "The city that the customer wants to travel to",
+price_function_tool = {
+    "type": "function",
+    "function":{
+        "name": "get_ticket_price",
+        "description": "Get the price of a return ticket to the destination city. Call this whenever you need to know the ticket price, for example when a customer asks 'How much is a ticket to this city'",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "destination_city": {
+                    "type": "string",
+                    "description": "The city that the customer wants to travel to",
+                },
             },
-        },
-        "required": ["destination_city"],
-        "additionalProperties": False
-    }
+            "required": ["destination_city"],
+            # "additionalProperties": False
+        }
+    },
 }
 
 # And this is included in a list of tools:
-tools = [{"type": "function", "function": price_function}]
+available_functions = {
+  'get_ticket_price': get_ticket_price,
+}
+
+tools = [price_function_tool]
 
 
 with gr.Blocks() as ui:
