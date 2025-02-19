@@ -172,3 +172,5 @@ cython_debug/
 
 .idea
 */.gradio
+*/.temp_audio
+*.mp3
